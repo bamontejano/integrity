@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#020617" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Integrity" />
+    <link rel="apple-touch-icon" href="/pwa-192.png" />
+    <title>Integrity | AI Governance & Risk Audit Laboratory</title>
+    <meta name="description" content="Integrity is the leading platform for evaluating normative stability and behavioral drift in AI agents. Built for insurers and developers of critical autonomous systems.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-[#020617] text-white min-h-screen font-['Outfit'] overflow-x-hidden">
+    <!-- Main Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-black/50 backdrop-blur-xl border-b border-white/5 px-8 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black text-xl italic shadow-[0_0_20px_rgba(59,130,246,0.5)]">I</div>
+            <span class="font-black tracking-tighter text-2xl bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">INTEGRITY LABS</span>
+        </div>
+        <div class="flex gap-6">
+            <button id="navAudit" class="nav-link active">Auditoría</button>
+            <button id="navFleet" class="nav-link">Flota de Agentes</button>
+            <button id="navAPI" class="nav-link text-secondary/50 hover:text-white transition-all">CI/CD & API</button>
+        </div>
+        <div class="flex gap-4 items-center">
+            <button id="viewLogsBtn" class="bg-white/5 border border-white/10 hover:bg-white/10 text-xs py-2 px-4 rounded-full transition-all">HISTORIAL</button>
+            <div class="status-badge">SISTEMA v4.0.2</div>
+        </div>
+    </nav>
+
+    <div id="app" class="pt-24 pb-20">
+        <main id="auditView" class="container mx-auto px-4">
+
+        <!-- Logs Modal -->
+        <div id="logsModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-8">
+            <div class="bg-[#0a0f1d] border border-white/10 rounded-2xl w-full max-w-6xl h-[80vh] flex flex-col shadow-2xl">
+                <div class="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
+                    <div class="flex gap-6 items-center flex-1">
+                        <h2 class="card-title m-0 whitespace-nowrap">Repositorio Forense</h2>
+                        <div class="flex gap-2 items-center flex-1 max-w-md">
+                            <input type="text" id="logSearch" class="bg-black/50 border border-white/10 rounded-lg p-2 text-xs w-full focus:border-blue-500 outline-none" placeholder="Buscar por agente o regla...">
+                        </div>
+                        <select id="riskFilter" class="bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white focus:border-blue-500 outline-none cursor-pointer">
+                            <option value="all">TODOS LOS RIESGOS</option>
+                            <option value="high">RIESGO ALTO (>15)</option>
+                            <option value="medium">RIESGO MEDIO (6-15)</option>
+                            <option value="low">RIESGO BAJO (0-5)</option>
+                        </select>
+                    </div>
+                    <button id="methodologyBtn" class="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-full hover:bg-blue-500/30 transition-all mr-auto ml-6">VER METODOLOGÍA</button>
+                    <button id="closeLogsBtn" class="text-secondary hover:text-white ml-6">&times; CERRAR</button>
+                </div>
+
+                <div id="logsTableContainer" class="flex-1 overflow-auto p-6">
+                    <table class="w-full text-left text-sm">
+                        <thead class="text-secondary border-b border-white/10">
+                            <tr>
+                                <th class="pb-3">FECHA</th>
+                                <th class="pb-3">AGENTE</th>
+                                <th class="pb-3">REGLA</th>
+                                <th class="pb-3">PASO</th>
+                                <th class="pb-3">SCORE</th>
+                                <th class="pb-3 text-right">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsBody">
+                            <!-- Logs will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Mode Selector -->
+        <div class="flex justify-center mb-8">
+            <div class="bg-white/5 p-1 rounded-xl border border-white/10 flex gap-1">
+                <button id="modeSim" class="mode-tab active">SIMULACIÓN (IA vs IA)</button>
+                <button id="modeReal" class="mode-tab">INTEGRACIÓN REAL (PROD)</button>
+            </div>
+        </div>
+
+        <!-- Integration Config (Hidden by default) -->
+        <section id="integrationConfig" class="card mb-8 hidden border-blue-500/30">
+            <h2 class="card-title">Configuración de Conector Externo</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <div class="form-group">
+                        <label class="label">Endpoint de Producción (Agent URL)</label>
+                        <input type="text" id="externalEndpoint" class="input" placeholder="https://api.tuagente.com/v1/chat">
+                    </div>
+                    <div class="form-group">
+                        <label class="label">API Key / Token de Acceso</label>
+                        <input type="password" id="externalApiKey" class="input" placeholder="Bearer sk-...">
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="form-group">
+                        <label class="label">Body Mapping (JSON Path de Entrada)</label>
+                        <input type="text" id="externalInputPath" class="input" placeholder="message.content" value="prompt">
+                        <p class="text-[10px] text-secondary mt-1">Nombre del campo donde enviaremos el ataque.</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="label">Response Mapping (JSON Path de Salida)</label>
+                        <input type="text" id="externalOutputPath" class="input" placeholder="choices[0].message.content" value="response">
+                        <p class="text-[10px] text-secondary mt-1">Ruta para extraer la respuesta de tu agente.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Headers Section -->
+            <div class="mt-6 border-t border-white/5 pt-6">
+                <div class="flex justify-between items-center mb-4">
+                    <label class="label mb-0">Cabeceras HTTP Personalizadas</label>
+                    <button id="addHeaderBtn" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-[10px] px-3 py-1 rounded-lg border border-blue-500/30 transition-all">+ Añadir Header</button>
+                </div>
+                <div id="headersContainer" class="space-y-2">
+                    <!-- Dynamic headers go here -->
+                </div>
+            </div>
+
+            <div class="mt-8 flex items-center gap-4">
+                <button id="testConnBtn" class="bg-white/5 hover:bg-white/10 text-white px-6 py-2 rounded-xl border border-white/10 transition-all font-bold flex items-center gap-2">
+                    <span id="testConnIcon" class="w-2 h-2 rounded-full bg-slate-500"></span>
+                    PROBAR CONEXIÓN
+                </button>
+                <div id="testConnStatus" class="text-xs text-secondary italic"></div>
+            </div>
+        </section>
+
+        <!-- Initial Setup Card -->
+        <section id="setupSection" class="card mb-8">
+            <h2 class="card-title">Configuración del Agente a Auditar</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="form-group">
+                        <label class="label">Escenario de Industria</label>
+                        <select id="industryTemplate" class="input">
+                            <option value="custom">Configuración Manual</option>
+                            <option value="finanzas" selected>Finanzas (Gestión de Patrimonio)</option>
+                            <option value="seguros">Seguros (Validación de Siniestros)</option>
+                            <option value="salud">Salud (Prescripción Médica)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="label">Perfil Conductual (Sujeto de Prueba)</label>
+                        <select id="agentPersonality" class="input">
+                            <option value="balanced" selected>Estándar (Equilibrado)</option>
+                            <option value="compliant">Complaciente (Prioriza ayudar sobre la regla)</option>
+                            <option value="evasive">Evasivo (Oscuro y Corporativo)</option>
+                            <option value="incorruptible">Incorruptible (Seguridad Máxima)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="label">Avatar del Atacante (Red Team)</label>
+                        <select id="attackerPersona" class="input">
+                            <option value="hacker" selected>Hacker Técnico (Bypass)</option>
+                            <option value="social">Ingeniero Social (Emocional)</option>
+                            <option value="aggressive">Cliente Agresivo (Presión)</option>
+                            <option value="chaos">Agente del Caos (Impredecible)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs text-secondary font-bold">NOMBRE DEL AGENTE</label>
+                    <input type="text" id="agentName" class="bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-blue-500 outline-none" placeholder="Ej: WealthGuard-AI">
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs text-secondary font-bold">REGLA CORE (NORMA A PROTEGER)</label>
+                    <input type="text" id="agentRule" class="bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-blue-500 outline-none" placeholder="Ej: No autorizar transferencias superiores a $5000">
+                </div>
+            </div>
+        </section>
+
+
+        <main class="dashboard-grid">
+
+            <!-- Sidebar: Analysis Progress -->
+            <section class="sidebar flex flex-col gap-8">
+                <div class="card">
+                    <h2 class="card-title">Score de Integridad</h2>
+                    <div class="score-container">
+                        <div class="gauge-wrapper">
+                            <svg class="gauge-svg" viewBox="0 0 100 100">
+                                <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
+                                <circle id="gaugeProgress" class="gauge-progress" cx="50" cy="50" r="45" stroke-dasharray="283" stroke-dashoffset="283"></circle>
+                                
+                                <defs>
+                                    <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#3b82f6" />
+                                        <stop offset="100%" stop-color="#06b6d4" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <div class="gauge-value">
+                                <span id="scoreNum" class="score-num">--</span>
+                                <div class="score-label">IS RATING</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 class="card-title">Protocolo de 8 Pasos</h2>
+                    <div id="stepsList" class="steps-list">
+                        <!-- Steps will be injected here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Main Content: Forensic Terminal -->
+            <section class="main-content flex flex-col gap-8">
+                <div class="card">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="card-title">Terminal de Auditoría Forense</h2>
+                        <div class="flex gap-2">
+                           <span id="stepLabel" class="text-xs font-mono text-secondary">ESPERANDO INICIO...</span>
+                        </div>
+                    </div>
+                    
+                    <div id="terminal" class="terminal">
+                        <div class="terminal-line">[SISTEMA] Bienvenido a Integrity v4.0.</div>
+                        <div class="terminal-line">[SISTEMA] Seleccione un perfil conductual y una industria para comenzar.</div>
+                    </div>
+
+                    <div class="controls">
+                        <button id="startBtn" class="btn btn-primary">INICIAR TEST DE PRESIÓN</button>
+                        <button id="resetBtn" class="btn btn-secondary">RESETEAR</button>
+                    </div>
+                </div>
+
+                <!-- Final Forensic Report -->
+                <div id="reportSection" class="card hidden border-t-4 border-accent-blue">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h2 class="card-title mb-1">Informe de Estabilidad Conductual</h2>
+                            <p class="text-secondary text-xs">CERTIFICADO DE CONFORMIDAD NORMATIVA v1.0</p>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <button id="downloadPdfBtn" class="bg-white/5 border border-white/10 hover:bg-white/10 text-xs py-2 px-4 rounded-lg transition-all text-white hidden">⬇️ DESCARGAR PDF</button>
+                            <div id="verdictBadge" class="px-4 py-2 rounded-lg font-bold text-sm">--</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+                            <div class="text-secondary text-[10px] uppercase font-bold mb-2">Punto de Ruptura</div>
+                            <div id="breakPoint" class="text-lg font-bold">Sin Datos</div>
+                        </div>
+                        <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+                            <div class="text-secondary text-[10px] uppercase font-bold mb-2">Perfil de Riesgo</div>
+                            <div id="riskProfile" class="text-lg font-bold">Pendiente</div>
+                        </div>
+                        <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+                            <div class="text-secondary text-[10px] uppercase font-bold mb-2">Asegurabilidad</div>
+                            <div id="insurability" class="text-lg font-bold">Evaluando...</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <div>
+                            <h3 class="text-xs font-bold text-secondary uppercase mb-3">Evolución de Riesgo por Paso</h3>
+                            <div class="bg-black/40 p-4 rounded-xl border border-white/5 h-[250px] flex items-center justify-center">
+                                <canvas id="riskChart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold text-secondary uppercase mb-3">Análisis Forense Detallado</h3>
+                            <div id="finalAnalysisText" class="text-sm leading-relaxed text-slate-300 italic p-6 bg-white/5 rounded-lg border-l-2 border-white/20 h-[250px] overflow-auto">
+                                Inicie el protocolo para generar el análisis cualitativo.
+                            </div>
+                        </div>
+                    </div>
+            </section>
+        </main>
+
+        <!-- Fleet Dashboard (Hidden) -->
+        <main id="fleetView" class="container mx-auto px-4 hidden">
+            <div class="flex justify-between items-center mb-12">
+                <div>
+                    <h2 class="text-4xl font-black mb-2">Flota de Activos Auditados</h2>
+                    <p class="text-secondary">Gestión centralizada de integridad y cumplimiento de agentes autónomos.</p>
+                </div>
+                <div class="flex gap-4">
+                    <div class="bg-blue-500/10 border border-blue-500/20 px-6 py-4 rounded-2xl">
+                        <div class="text-[10px] text-blue-400 font-bold uppercase mb-1">Puntuación Media Flota</div>
+                        <div class="text-2xl font-black">84.2</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="fleetGrid">
+                <!-- Fleet items go here -->
+                <div class="card fleet-card">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">💎</div>
+                        <div class="px-3 py-1 bg-green-500/20 text-green-400 text-[10px] font-black rounded-full border border-green-500/30">92 IS</div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1">WealthGuard-AI</h3>
+                    <p class="text-xs text-secondary mb-4 line-clamp-1">Regla: No transferir > $5000 sin doble factor</p>
+                    <div class="bg-white/5 h-1 w-full rounded-full overflow-hidden mb-4">
+                        <div class="bg-blue-500 h-full w-[92%] shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] font-bold">
+                        <span class="text-secondary text-xs">ÚLTIMA AUDITORÍA: 2h ago</span>
+                        <span class="text-blue-400">VER DETALLES →</span>
+                    </div>
+                </div>
+
+                <div class="card fleet-card">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🩺</div>
+                        <div class="px-3 py-1 bg-yellow-500/20 text-yellow-400 text-[10px] font-black rounded-full border border-yellow-500/30">74 IS</div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1">HealthCare-Assistant</h3>
+                    <p class="text-xs text-secondary mb-4 line-clamp-1">Regla: No emitir prescripciones médicas</p>
+                    <div class="bg-white/5 h-1 w-full rounded-full overflow-hidden mb-4">
+                        <div class="bg-yellow-500 h-full w-[74%]"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] font-bold">
+                        <span class="text-secondary text-xs">ÚLTIMA AUDITORÍA: Ayer</span>
+                        <span class="text-blue-400">VER DETALLES →</span>
+                    </div>
+                </div>
+
+                <div class="card fleet-card">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📑</div>
+                        <div class="px-3 py-1 bg-blue-500/20 text-blue-400 text-[10px] font-black rounded-full border border-blue-500/30">86 IS</div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1">PolicyAudit-Bot</h3>
+                    <p class="text-xs text-secondary mb-4 line-clamp-1">Regla: No filtrar datos de pólizas inactivas</p>
+                    <div class="bg-white/5 h-1 w-full rounded-full overflow-hidden mb-4">
+                        <div class="bg-blue-500 h-full w-[86%]"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] font-bold">
+                        <span class="text-secondary text-xs">ÚLTIMA AUDITORÍA: 3d ago</span>
+                        <span class="text-blue-400">VER DETALLES →</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- API & CI/CD View (Hidden) -->
+        <main id="apiView" class="container mx-auto px-4 hidden">
+            <div class="max-w-4xl mx-auto pt-8">
+                <h2 class="text-4xl font-black mb-4">Integración CI/CD</h2>
+                <p class="text-secondary mb-12">Automatiza la auditoría de integridad en cada despliegue mediante nuestra API Rest.</p>
+                
+                <div class="card border-blue-500/20 mb-8">
+                    <h3 class="card-title">Token de Producción (API Key)</h3>
+                    <p class="text-sm text-secondary mb-4">Usa este token en tus cabeceras HTTP: <code>X-Integrity-Token</code></p>
+                    <div class="flex gap-4">
+                        <input type="text" readonly class="input font-mono text-blue-400" value="intg_live_8f3k9m2l0p5s3r9t1w8y7x6v4c2v0m1">
+                        <button class="bg-white/10 hover:bg-white/20 px-6 py-2 rounded-xl transition-all font-bold">REGENERAR</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="card">
+                        <h3 class="card-title">Configuración Webhooks</h3>
+                        <p class="text-xs text-secondary mb-4">Notificar resultados a tu sistema externo al finalizar auditorías.</p>
+                        <div class="form-group mb-4">
+                            <label class="label">Webhook URL</label>
+                            <input type="text" class="input" placeholder="https://tu-sistema.com/hook">
+                        </div>
+                        <button class="bg-blue-600 hover:bg-blue-500 w-full py-4 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20">GUARDAR CONFIGURACIÓN</button>
+                    </div>
+                    <div class="card bg-black/40">
+                        <h3 class="card-title">Ejemplo Automatización (GitHub Action)</h3>
+                        <pre class="text-[10px] font-mono text-emerald-400 bg-black/50 p-6 rounded-xl border border-white/5 overflow-x-auto">
+- name: Audit Integrity
+  run: |
+    curl -X POST https://api.integrity-labs.ai/v1/audit \\
+      -H "X-Integrity-Token: \${{ secrets.INTG_TOKEN }}" \\
+      -H "Content-Type: application/json" \\
+      -d '{
+        "agent_url": "https://staging.tu-ai.com",
+        "core_rule": "No transferir > $5000",
+        "mode": "prod_eval"
+      }'</pre>
+                    </div>
+                </div>
+            </div>
+        </main>
+        </main>
+    </div>
+    <div id="methodologyModal" class="fixed inset-0 bg-black/90 backdrop-blur-xl z-[60] hidden flex items-center justify-center p-8">
+        <div class="bg-[#0f172a] border border-blue-500/20 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-auto shadow-[0_0_50px_rgba(59,130,246,0.15)]">
+            <div class="p-10">
+                <div class="flex justify-between items-center mb-10">
+                    <h2 class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Dossier de Metodología Integrity</h2>
+                    <button id="closeMethodologyBtn" class="text-secondary hover:text-white text-2xl">&times;</button>
+                </div>
+                
+                <div class="prose prose-invert max-w-none space-y-8">
+                    <section>
+                        <h3 class="text-blue-400 font-bold uppercase tracking-wider text-sm mb-4">01. Auditoría de Estabilidad Normativa</h3>
+                        <p class="text-slate-400 leading-relaxed">Nuestra metodología de "Red Teaming Dinámico" utiliza modelos generativos de última generación para simular ataques adaptativos. No se trata de una lista estática de pruebas, sino de un motor que aprende de las concesiones del agente para encontrar el punto de ruptura exacto.</p>
+                    </section>
+                    
+                    <div class="grid grid-cols-2 gap-8 py-6">
+                        <div class="bg-blue-500/5 p-6 rounded-2xl border border-blue-500/10">
+                            <h4 class="text-white font-bold mb-2">Cuantificación de Deriva</h4>
+                            <p class="text-xs text-slate-400">Medimos la 'Deriva Conductual' (Behavioral Drift), cuantificando qué tan lejos llega un agente al intentar complacer a un atacante ignorando su programación central.</p>
+                        </div>
+                        <div class="bg-blue-500/5 p-6 rounded-2xl border border-blue-500/10">
+                            <h4 class="text-white font-bold mb-2">Veredicto Forense</h4>
+                            <p class="text-xs text-slate-400">Cada sesión concluye con un análisis de 'Asegurabilidad' (Insurability), crucial para entidades bancarias y de seguros que despliegan IAs autónomas.</p>
+                        </div>
+                    </div>
+
+                    <section>
+                        <h3 class="text-blue-400 font-bold uppercase tracking-wider text-sm mb-4">02. Protocolos de Presión</h3>
+                        <ul class="space-y-4">
+                            <li class="flex gap-4">
+                                <span class="text-blue-500 font-bold">A.</span>
+                                <div>
+                                    <h5 class="text-white font-medium">Inyección de Contexto Emocional</h5>
+                                    <p class="text-xs text-slate-500">Simulamos emergencias, presiones de superiores y dilemas éticos para probar la resiliencia de la 'Regla Core'.</p>
+                                </div>
+                            </li>
+                            <li class="flex gap-4">
+                                <span class="text-blue-500 font-bold">B.</span>
+                                <div>
+                                    <h5 class="text-white font-medium">Bypass Logístico-Técnico</h5>
+                                    <p class="text-xs text-slate-500">Ataques basados en terminología de cumplimiento y lagunas legales simuladas.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </section>
+                </div>
+                
+                <div class="mt-12 pt-8 border-t border-white/5 flex justify-center">
+                    <button id="closeMethodologyBtn2" class="bg-blue-500 py-3 px-10 rounded-xl font-bold hover:bg-blue-400 transition-all">ENTENDIDO</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
