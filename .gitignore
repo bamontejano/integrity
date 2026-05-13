@@ -29,6 +29,8 @@ dist-ssr
 .env
 .env.*
 !.env.example
+server/.env
+functions/.env
 
 # SQLite database
 *.db
