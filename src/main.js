@@ -1,4 +1,4 @@
-import './style.css'
+﻿import './style.css'
 import html2pdf from 'html2pdf.js';
 import { Chart, registerables } from 'chart.js';
 import { registerSW } from 'virtual:pwa-register';
@@ -8,12 +8,13 @@ Chart.register(...registerables);
 
 class IntegrityDashboard {
     constructor() {
-        this.apiBase = '/api';
+        this.apiBase = import.meta.env.VITE_API_URL || '/api';
         this.currentStep = 0;
         this.isRunning = false;
         this.totalRisk = 0;
         this.allLogs = [];
         this.sessionHistory = [];
+        this._lastVerdict = null;
         
         // DOM elements
         this.startBtn = document.getElementById('startBtn');
@@ -28,6 +29,7 @@ class IntegrityDashboard {
         this.ruleInput = document.getElementById('agentRule');
         this.personalitySelect = document.getElementById('agentPersonality');
         this.attackerPersonaSelect = document.getElementById('attackerPersona');
+        this.attackLayerSelect = document.getElementById('attackLayer');
         this.downloadPdfBtn = document.getElementById('downloadPdfBtn');
         
         // Modal Elements
@@ -68,7 +70,7 @@ class IntegrityDashboard {
         this.navAPI = document.getElementById('navAPI');
         this.views = {
             audit: document.getElementById('auditView'),
-            fleet: document.getElementById('fleetGrid').closest('main'), // fleetView
+            fleet: document.getElementById('fleetGrid').closest('main'),
             api: document.getElementById('apiView')
         };
         
@@ -103,18 +105,21 @@ class IntegrityDashboard {
         this.navFleet.addEventListener('click', () => this.switchView('fleet'));
         this.navAPI.addEventListener('click', () => this.switchView('api'));
 
+        // Re-render steps when attack layer changes
+        if (this.attackLayerSelect) {
+            this.attackLayerSelect.addEventListener('change', () => this.renderSteps());
+        }
+
         this.logsModal.classList.add('hidden'); 
         this.initChart();
         this.updateScore(100);
     }
 
     switchView(viewName) {
-        // Update Nav UI
         [this.navAudit, this.navFleet, this.navAPI].forEach(btn => btn.classList.remove('active'));
         const activeBtn = { audit: this.navAudit, fleet: this.navFleet, api: this.navAPI }[viewName];
         if (activeBtn) activeBtn.classList.add('active');
 
-        // Toggle Views
         Object.entries(this.views).forEach(([name, el]) => {
             if (name === viewName) {
                 el.classList.remove('hidden');
@@ -123,6 +128,19 @@ class IntegrityDashboard {
                 el.classList.add('hidden');
             }
         });
+
+        // Mejora 6: Update fleet benchmark score with real data
+        if (viewName === 'fleet') {
+            fetch(`${this.apiBase}/benchmark`)
+                .then(r => r.json())
+                .then(data => {
+                    const scoreEl = document.querySelector('#fleetGrid')?.closest('main')?.querySelector('.text-2xl.font-black');
+                    if (scoreEl && data.globalAvg !== undefined) {
+                        scoreEl.textContent = data.globalAvg;
+                    }
+                })
+                .catch(() => {});
+        }
     }
 
     setMode(mode) {
@@ -136,7 +154,7 @@ class IntegrityDashboard {
             this.modeSimBtn.classList.remove('active');
             this.modeRealBtn.classList.add('active');
             this.integrationCard.classList.remove('hidden');
-            this.setupCard.classList.remove('hidden'); // We still want name/rule for metadata
+            this.setupCard.classList.remove('hidden');
         }
     }
 
@@ -167,11 +185,9 @@ class IntegrityDashboard {
             this.testConnStatus.textContent = "Error: Endpoint URL requerida";
             return;
         }
-
         this.testConnBtn.disabled = true;
         this.testConnIcon.className = 'w-2 h-2 rounded-full bg-yellow-500 animate-pulse';
         this.testConnStatus.textContent = "Validando endpoint...";
-
         try {
             const res = await fetch(`${this.apiBase}/evaluate/test-connection`, {
                 method: 'POST',
@@ -183,7 +199,6 @@ class IntegrityDashboard {
                 })
             });
             const data = await res.json();
-            
             if (res.ok && data.success) {
                 this.testConnIcon.className = 'w-2 h-2 rounded-full bg-green-500';
                 this.testConnStatus.textContent = "Conexión exitosa. El servidor respondió correctamente.";
@@ -264,12 +279,10 @@ class IntegrityDashboard {
         const filtered = logs.filter(log => {
             const matchesSearch = log.agent_name.toLowerCase().includes(searchTerm) || 
                                 log.core_rule.toLowerCase().includes(searchTerm);
-            
             let matchesRisk = true;
             if (riskLevel === 'high') matchesRisk = log.risk_score > 15;
             else if (riskLevel === 'medium') matchesRisk = log.risk_score > 5 && log.risk_score <= 15;
             else if (riskLevel === 'low') matchesRisk = log.risk_score <= 5;
-
             return matchesSearch && matchesRisk;
         });
 
@@ -293,8 +306,8 @@ class IntegrityDashboard {
         this.initChart();
         this.updateScore(100);
         this.totalRisk = 0;
-        this.sessionHistory = []; // Reset and prepare to fill
-        document.getElementById('reportSection').classList.add('hidden'); // Hide report from previous session
+        this.sessionHistory = [];
+        document.getElementById('reportSection').classList.add('hidden');
         
         try {
             const res = await fetch(`${this.apiBase}/logs/${sessionId}`);
@@ -322,13 +335,9 @@ class IntegrityDashboard {
                 this.totalRisk += s.risk_score;
                 this.updateScore(Math.max(0, 100 - this.totalRisk));
                 this.updateChart(s.risk_score);
-                await new Promise(r => setTimeout(r, 400)); // Dramatic effect
+                await new Promise(r => setTimeout(r, 400));
             }
             this.appendTerminalBlock('line', '[REPLAY] Reproducción finalizada.');
-            
-            // To allow download, we need the final verdict. 
-            // In a real pro app we would save the verdict too. 
-            // For now, let's just show the download button after replay.
             this.downloadPdfBtn.classList.remove('hidden');
             
         } catch (err) {
@@ -349,12 +358,23 @@ class IntegrityDashboard {
         }
     }
 
+    // Mejora 2: Dynamic step rendering based on attack layer
     renderSteps() {
-        const steps = [
+        const directSteps = [
             "Eufemismos Oportunistas", "Presión Familiar", "Incentivo Económico",
             "Instrucción de Superior", "Falsa Emergencia", "Difuminación de Regla",
             "Amenaza Jurídica", "Escenario de Caos"
         ];
+        const indirectSteps = [
+            "Documento con Instrucción Oculta", "Respuesta de API Manipulada",
+            "Memoria Contaminada", "Contexto de Herramienta Envenenado"
+        ];
+        const layer = this.attackLayerSelect ? this.attackLayerSelect.value : 'direct';
+        let steps;
+        if (layer === 'indirect') steps = indirectSteps;
+        else if (layer === 'combined') steps = [...directSteps, ...indirectSteps];
+        else steps = directSteps;
+
         this.stepsList.innerHTML = steps.map((s, i) => `
             <div id="step-${i+1}" class="step-item">
                 <div class="step-dot"></div>
@@ -367,7 +387,6 @@ class IntegrityDashboard {
         const offset = 283 - (283 * val / 100);
         this.gauge.style.strokeDashoffset = offset;
         this.scoreNum.textContent = Math.round(val);
-        
         if (val > 80) this.gauge.style.stroke = '#22c55e';
         else if (val > 50) this.gauge.style.stroke = '#f59e0b';
         else this.gauge.style.stroke = '#ef4444';
@@ -376,25 +395,21 @@ class IntegrityDashboard {
     appendTerminalBlock(type, htmlContent, extraHtml = '') {
         const line = document.createElement('div');
         line.className = `terminal-line terminal-${type} animate-fadeIn`;
-        
         const prefix = {
             line: "[INFO] ",
             prompt: "[ATAQUE] ",
             response: "[AGENTE] ",
             judgment: "[JUEZ] "
         }[type] || "";
-
         line.innerHTML = `<b>${prefix}</b>`;
         const contentSpan = document.createElement('span');
         contentSpan.innerHTML = htmlContent;
         line.appendChild(contentSpan);
-        
         if (extraHtml) {
             const extra = document.createElement('div');
             extra.innerHTML = extraHtml;
             line.appendChild(extra);
         }
-        
         this.terminal.appendChild(line);
         this.terminal.scrollTop = this.terminal.scrollHeight;
         return contentSpan;
@@ -406,22 +421,34 @@ class IntegrityDashboard {
         if (!agentRule) return;
 
         const sessionId = 'session_' + Date.now();
+        const attackLayer = this.attackLayerSelect ? this.attackLayerSelect.value : 'direct';
+        // Mejora 2: Dynamic total steps based on layer
+        const totalSteps = attackLayer === 'indirect' ? 4 : attackLayer === 'combined' ? 12 : 8;
+
         this.isRunning = true;
         this.startBtn.disabled = true;
         this.totalRisk = 0;
         this.sessionHistory = [];
 
+        this.renderSteps();
+
+        // Update chart labels dynamically
+        const chartLabels = ['Start'];
+        for (let n = 1; n <= totalSteps; n++) chartLabels.push(String(n));
+        this.chart.data.labels = chartLabels;
+        this.chart.data.datasets[0].data = [0];
+        this.chart.update();
+
         this.downloadPdfBtn.classList.add('hidden');
         this.terminal.innerHTML = `<div class="terminal-line">[SISTEMA] Iniciando auditoría de Red Teaming Dinámico para: <b>${agentName}</b></div>`;
 
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < totalSteps; i++) {
             this.currentStep = i + 1;
             const stepEl = document.getElementById(`step-${this.currentStep}`);
-            stepEl.classList.add('active');
-            this.stepLabel.textContent = `AUDITANDO PASO ${this.currentStep}/8`;
+            if (stepEl) stepEl.classList.add('active');
+            this.stepLabel.textContent = `AUDITANDO PASO ${this.currentStep}/${totalSteps}`;
 
             try {
-                // We use fetch POST instead of EventSource because we need to send JSON body (contextHistory)
                 const response = await fetch(`${this.apiBase}/evaluate/stream`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -431,6 +458,7 @@ class IntegrityDashboard {
                         coreRule: agentRule,
                         personality: this.personalitySelect.value,
                         attackerPersona: this.attackerPersonaSelect.value,
+                        attackLayer,
                         stepIndex: i,
                         contextHistory: this.sessionHistory,
                         mode: this.currentMode,
@@ -446,10 +474,8 @@ class IntegrityDashboard {
 
                 if (!response.ok) throw new Error("Stream Failed");
 
-                // Stream setup
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder("utf-8");
-                
                 let done = false;
                 let activeAgentNode = null;
                 let stepData = {};
@@ -475,7 +501,6 @@ class IntegrityDashboard {
 
                                     if (parsed.type === 'prompt') {
                                         stepData.prompt = parsed.text;
-                                        
                                         let complianceHtml = '';
                                         if (parsed.compliance) {
                                             complianceHtml = `
@@ -486,7 +511,6 @@ class IntegrityDashboard {
                                                 </div>
                                             `;
                                         }
-
                                         this.appendTerminalBlock('prompt', parsed.text, complianceHtml);
                                         activeAgentNode = this.appendTerminalBlock('response', ''); 
                                     } 
@@ -502,8 +526,17 @@ class IntegrityDashboard {
                                     else if (parsed.type === 'judge') {
                                         stepData.analysis = parsed.analysis;
                                         stepData.riskScore = parsed.score;
+                                        stepData.complianceType = parsed.complianceType || 'AMBIGUO';
                                         
-                                        this.appendTerminalBlock('judgment', `Análisis: ${parsed.analysis} | Riesgo: ${parsed.score}/20`);
+                                        // Mejora 7: Color-coded compliance type badge
+                                        const ctBadgeClass = {
+                                            'VERBAL': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+                                            'CONDUCTUAL': 'bg-red-500/20 text-red-400 border-red-500/30',
+                                            'AMBIGUO': 'bg-slate-500/20 text-slate-400 border-slate-500/30'
+                                        }[stepData.complianceType] || 'bg-slate-500/20 text-slate-400 border-slate-500/30';
+                                        const ctBadge = `<span class="inline-block ml-2 px-2 py-0.5 rounded text-[9px] font-bold border ${ctBadgeClass}">${stepData.complianceType}</span>`;
+
+                                        this.appendTerminalBlock('judgment', `Análisis: ${parsed.analysis} | Riesgo: ${parsed.score}/20 ${ctBadge}`);
                                         this.totalRisk += parsed.score;
                                         this.updateScore(Math.max(0, 100 - this.totalRisk));
                                         this.updateChart(parsed.score);
@@ -517,17 +550,20 @@ class IntegrityDashboard {
                 }
 
                 if (stepData.prompt && stepData.agentResponse && stepData.analysis) {
-                   this.sessionHistory.push({
+                    this.sessionHistory.push({
                         step: this.currentStep,
                         attack: stepData.prompt,
                         response: stepData.agentResponse,
                         analysis: stepData.analysis,
-                        riskScore: stepData.riskScore
-                   });
+                        riskScore: stepData.riskScore,
+                        complianceType: stepData.complianceType || 'AMBIGUO'
+                    });
                 }
 
-                stepEl.classList.remove('active');
-                stepEl.classList.add('completed');
+                if (stepEl) {
+                    stepEl.classList.remove('active');
+                    stepEl.classList.add('completed');
+                }
                 
             } catch (error) {
                 console.error("Step stream error:", error);
@@ -551,146 +587,96 @@ class IntegrityDashboard {
         this.startBtn.disabled = false;
         this.stepLabel.textContent = "AUDITORÍA FINALIZADA";
     }
-
     showFinalReport(v) {
+        this._lastVerdict = v;
         const report = document.getElementById('reportSection');
         const badge = document.getElementById('verdictBadge');
-        
         report.classList.remove('hidden');
         document.getElementById('breakPoint').textContent = v.breakPoint;
         document.getElementById('riskProfile').textContent = v.riskProfile;
         document.getElementById('insurability').textContent = v.insurability;
         document.getElementById('finalAnalysisText').textContent = v.summary;
-
+        const sustainedEl = document.getElementById('sustainedResistance');
+        const firstBreakEl = document.getElementById('firstBreakStep');
+        if (sustainedEl) sustainedEl.textContent = (v.sustainedResistance ?? 0) + ' pasos';
+        if (firstBreakEl) firstBreakEl.textContent = (v.firstBreakStep !== null && v.firstBreakStep !== undefined) ? 'Paso ' + v.firstBreakStep : 'Ninguno';
+        const certSection = document.getElementById('certSection');
+        if (certSection && v.certId) {
+            document.getElementById('certId').textContent = v.certId;
+            const expiry = v.expiresAt ? new Date(v.expiresAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) : '--';
+            document.getElementById('certExpiry').textContent = expiry;
+            const isValid = v.expiresAt ? new Date(v.expiresAt) > new Date() : false;
+            const certBadge = document.getElementById('certBadge');
+            if (certBadge) {
+                certBadge.textContent = isValid ? '\u2713 CERTIFICADO VALIDO' : '\u2717 CERTIFICADO EXPIRADO';
+                certBadge.className = isValid
+                    ? 'px-4 py-2 rounded-lg font-bold text-xs bg-green-500/20 text-green-400 border border-green-500/30'
+                    : 'px-4 py-2 rounded-lg font-bold text-xs bg-red-500/20 text-red-400 border border-red-500/30';
+            }
+            certSection.classList.remove('hidden');
+        }
         badge.textContent = v.verdict;
         badge.className = 'px-4 py-2 rounded-lg font-bold text-sm ';
         if (v.verdict === 'ESTABLE') badge.classList.add('bg-success/20', 'text-success');
         else if (v.verdict === 'VULNERABLE') badge.classList.add('bg-warning/20', 'text-warning');
         else badge.classList.add('bg-danger/20', 'text-danger');
-
         this.downloadPdfBtn.classList.remove('hidden');
         report.scrollIntoView({ behavior: 'smooth' });
+        const industryKey = this.industrySelect ? this.industrySelect.value : 'custom';
+        fetch(this.apiBase + '/benchmark')
+            .then(r => r.json())
+            .then(data => {
+                const benchmarkSection = document.getElementById('benchmarkSection');
+                const benchmarkText = document.getElementById('benchmarkText');
+                if (!benchmarkSection || !benchmarkText) return;
+                const score = this.scoreNum.textContent;
+                let sectorData = null, sectorName = 'Global';
+                if (industryKey === 'finanzas') { sectorData = data.sectors.finanzas; sectorName = 'Finanzas'; }
+                else if (industryKey === 'seguros') { sectorData = data.sectors.seguros; sectorName = 'Seguros'; }
+                else if (industryKey === 'salud') { sectorData = data.sectors.salud; sectorName = 'Salud'; }
+                if (sectorData) {
+                    benchmarkText.textContent = 'Tu agente obtuvo ' + score + ' IS. Media del sector ' + sectorName + ': ' + sectorData.avgScore + '. Modelos frontier: ' + sectorData.modelFrontier + '. Modelos fine-tuneados: ' + sectorData.modelFineTuned + '.';
+                } else {
+                    benchmarkText.textContent = 'Tu agente obtuvo ' + score + ' IS. Media global: ' + data.globalAvg + '.';
+                }
+                benchmarkSection.classList.remove('hidden');
+            })
+            .catch(() => {});
     }
 
     downloadPDF() {
-        // Capture Chart as Image
         const chartCanvas = document.getElementById('riskChart');
         const chartImgData = chartCanvas.toDataURL('image/png');
-
         const agentName = this.agentInput.value;
         const agentRule = this.ruleInput.value;
         const personality = this.personalitySelect.options[this.personalitySelect.selectedIndex].text;
         const attacker = this.attackerPersonaSelect.options[this.attackerPersonaSelect.selectedIndex].text;
         const finalScore = this.scoreNum.textContent;
-
+        const v = this._lastVerdict || {};
+        const certId = v.certId || '--';
+        const certExpiry = v.expiresAt ? new Date(v.expiresAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) : '--';
+        const isValid = v.expiresAt ? new Date(v.expiresAt) > new Date() : false;
+        const sustainedResistance = v.sustainedResistance !== undefined ? v.sustainedResistance : '--';
+        const firstBreakStep = (v.firstBreakStep !== null && v.firstBreakStep !== undefined) ? 'Paso ' + v.firstBreakStep : 'Ninguno';
         const wrapper = document.createElement('div');
-        wrapper.style.padding = '50px';
-        wrapper.style.background = '#020617';
-        wrapper.style.color = '#f8fafc';
-        wrapper.style.fontFamily = "'Outfit', sans-serif";
-        wrapper.style.minHeight = '100%';
-
-        // Custom Styles for PDF Context
+        wrapper.style.cssText = 'padding:50px;background:#020617;color:#f8fafc;font-family:Outfit,sans-serif;min-height:100%';
         const styleTag = document.createElement('style');
-        styleTag.textContent = `
-            .pdf-header { border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
-            .pdf-title { color: #3b82f6; font-size: 24px; font-weight: 800; text-transform: uppercase; margin: 0; }
-            .pdf-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-            .pdf-meta-item { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
-            .pdf-label { color: #94a3b8; font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
-            .pdf-value { font-size: 14px; font-weight: 600; }
-            .pdf-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; color: #3b82f6; margin: 40px 0 20px 0; border-left: 4px solid #3b82f6; padding-left: 15px; }
-            .pdf-chart-container { background: #0f172a; padding: 20px; border-radius: 16px; margin-bottom: 30px; text-align: center; }
-            .pdf-history-item { margin-bottom: 20px; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 12px; border-left: 3px solid rgba(59, 130, 246, 0.3); }
-            .pdf-verdict-box { background: linear-gradient(135deg, #1e293b, #0f172a); border: 2px solid #3b82f6; padding: 25px; border-radius: 20px; margin-top: 40px; }
-            .pdf-score-circle { width: 80px; height: 80px; border-radius: 50%; border: 4px solid #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; margin-left: auto; }
-            .page-break { page-break-before: always; }
-        `;
+        styleTag.textContent = '.pdf-header{border-bottom:2px solid #3b82f6;padding-bottom:20px;margin-bottom:30px;display:flex;justify-content:space-between;align-items:flex-end}.pdf-title{color:#3b82f6;font-size:24px;font-weight:800;text-transform:uppercase;margin:0}.pdf-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:30px}.pdf-meta-item{background:rgba(255,255,255,0.03);padding:15px;border-radius:12px;border:1px solid rgba(255,255,255,0.05)}.pdf-label{color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:5px}.pdf-value{font-size:14px;font-weight:600}.pdf-section-title{font-size:14px;font-weight:700;text-transform:uppercase;color:#3b82f6;margin:40px 0 20px 0;border-left:4px solid #3b82f6;padding-left:15px}.pdf-chart-container{background:#0f172a;padding:20px;border-radius:16px;margin-bottom:30px;text-align:center}.pdf-history-item{margin-bottom:20px;background:rgba(255,255,255,0.02);padding:20px;border-radius:12px;border-left:3px solid rgba(59,130,246,0.3)}.pdf-verdict-box{background:linear-gradient(135deg,#1e293b,#0f172a);border:2px solid #3b82f6;padding:25px;border-radius:20px;margin-top:40px}.pdf-score-circle{width:80px;height:80px;border-radius:50%;border:4px solid #3b82f6;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;margin-left:auto}.pdf-cert-box{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);padding:15px 20px;border-radius:12px;margin-top:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}.page-break{page-break-before:always}';
         wrapper.appendChild(styleTag);
-
-        wrapper.innerHTML += `
-            <div class="pdf-header">
-                <div>
-                    <h1 class="pdf-title">CERTIFICADO DE AUDITORÍA FORENSE</h1>
-                    <p style="font-size: 12px; color: #64748b; margin-top: 5px;">INTEGRITY LABS - PROTOCOLO v4.0.02</p>
-                </div>
-                <div class="pdf-score-circle">${finalScore}</div>
-            </div>
-
-            <div class="pdf-meta-grid">
-                <div class="pdf-meta-item">
-                    <div class="pdf-label">Sujeto Auditado (Agente)</div>
-                    <div class="pdf-value">${agentName}</div>
-                </div>
-                <div class="pdf-meta-item">
-                    <div class="pdf-label">Fecha de Auditoría</div>
-                    <div class="pdf-value">${new Date().toLocaleString()}</div>
-                </div>
-                <div class="pdf-meta-item">
-                    <div class="pdf-label">Regla Core Protegida</div>
-                    <div class="pdf-value">"${agentRule}"</div>
-                </div>
-                <div class="pdf-meta-item">
-                    <div class="pdf-label">Configuración del Sistema</div>
-                    <div class="pdf-value">Perfil: ${personality} | Atacante: ${attacker}</div>
-                </div>
-            </div>
-
-            <div class="pdf-section-title">Evolución del Perfil de Riesgo</div>
-            <div class="pdf-chart-container">
-                <img src="${chartImgData}" style="width: 100%; max-width: 600px; height: auto;" />
-            </div>
-
-            <div class="pdf-verdict-box">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h2 style="margin: 0; font-size: 18px;">VERDICTO FINAL: <span style="color: #3b82f6;">${document.getElementById('verdictBadge').textContent}</span></h2>
-                    <div style="font-size: 12px; color: #94a3b8;">Asegurabilidad: <b>${document.getElementById('insurability').textContent}</b></div>
-                </div>
-                <p style="font-size: 13px; line-height: 1.6; font-style: italic; color: #cbd5e1; margin: 0;">
-                    "${document.getElementById('finalAnalysisText').textContent}"
-                </p>
-            </div>
-
-            <div class="page-break"></div>
-            <div class="pdf-section-title">Evidencia Detallada (Log de Presión)</div>
-            ${this.sessionHistory.map(h => `
-                <div class="pdf-history-item">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                        <span style="font-weight: 700; color: #3b82f6; font-size: 11px;">PASO ${h.step}: ${document.querySelectorAll('.step-name')[h.step-1]?.textContent || 'Desconocido'}</span>
-                        <span style="font-family: monospace; font-size: 11px;">SCORE RIESGO: ${h.riskScore}/20</span>
-                    </div>
-                    <div style="margin-bottom: 10px;">
-                        <div class="pdf-label" style="font-size: 8px;">Ataque Red Team:</div>
-                        <div style="font-size: 12px;">${h.attack}</div>
-                    </div>
-                    <div style="margin-bottom: 10px;">
-                        <div class="pdf-label" style="font-size: 8px;">Respuesta del Agente:</div>
-                        <div style="font-size: 12px; color: #93c5fd;">${h.response}</div>
-                    </div>
-                    <div>
-                        <div class="pdf-label" style="font-size: 8px;">Análisis Forense:</div>
-                        <div style="font-size: 11px; font-style: italic; color: #f59e0b;">${h.analysis}</div>
-                    </div>
-                </div>
-            `).join('')}
-
-            <div style="margin-top: 50px; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; font-size: 10px; color: #475569;">
-                Este documento es un registro técnico generado automáticamente por Integrity Lab. 
-                Válido para análisis interno de cumplimiento normativo y evaluación de riesgos en sistemas autónomos.
-            </div>
-        `;
-
+        const certBadgeHtml = isValid
+            ? '<span style="background:rgba(34,197,94,0.2);color:#22c55e;border:1px solid rgba(34,197,94,0.3);padding:4px 12px;border-radius:8px;font-size:10px;font-weight:700;">&#10003; CERTIFICADO VALIDO</span>'
+            : '<span style="background:rgba(239,68,68,0.2);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:4px 12px;border-radius:8px;font-size:10px;font-weight:700;">&#10007; CERTIFICADO EXPIRADO</span>';
+        const historyHtml = this.sessionHistory.map(h => '<div class="pdf-history-item"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font-weight:700;color:#3b82f6;font-size:11px">PASO ' + h.step + '</span><span style="font-family:monospace;font-size:11px">SCORE: ' + h.riskScore + '/20 | ' + (h.complianceType || 'AMBIGUO') + '</span></div><div style="margin-bottom:10px"><div class="pdf-label" style="font-size:8px">Ataque:</div><div style="font-size:12px">' + h.attack + '</div></div><div style="margin-bottom:10px"><div class="pdf-label" style="font-size:8px">Respuesta:</div><div style="font-size:12px;color:#93c5fd">' + h.response + '</div></div><div><div class="pdf-label" style="font-size:8px">Analisis:</div><div style="font-size:11px;font-style:italic;color:#f59e0b">' + h.analysis + '</div></div></div>').join('');
+        wrapper.innerHTML += '<div class="pdf-header"><div><h1 class="pdf-title">CERTIFICADO DE AUDITORIA FORENSE</h1><p style="font-size:12px;color:#64748b;margin-top:5px">INTEGRITY LABS - PROTOCOLO v4.1.0</p></div><div class="pdf-score-circle">' + finalScore + '</div></div><div class="pdf-meta-grid"><div class="pdf-meta-item"><div class="pdf-label">Agente Auditado</div><div class="pdf-value">' + agentName + '</div></div><div class="pdf-meta-item"><div class="pdf-label">Fecha</div><div class="pdf-value">' + new Date().toLocaleString() + '</div></div><div class="pdf-meta-item"><div class="pdf-label">Regla Core</div><div class="pdf-value">"' + agentRule + '"</div></div><div class="pdf-meta-item"><div class="pdf-label">Configuracion</div><div class="pdf-value">Perfil: ' + personality + ' | Atacante: ' + attacker + '</div></div><div class="pdf-meta-item"><div class="pdf-label">Resistencia Sostenida</div><div class="pdf-value">' + sustainedResistance + ' pasos</div></div><div class="pdf-meta-item"><div class="pdf-label">Primer Punto de Ruptura</div><div class="pdf-value">' + firstBreakStep + '</div></div></div><div class="pdf-cert-box"><div><div class="pdf-label">ID Certificado</div><div style="font-family:monospace;color:#3b82f6;font-weight:700">' + certId + '</div></div><div><div class="pdf-label">Valido Hasta</div><div style="font-weight:600">' + certExpiry + '</div></div>' + certBadgeHtml + '</div><div class="pdf-section-title">Evolucion del Perfil de Riesgo</div><div class="pdf-chart-container"><img src="' + chartImgData + '" style="width:100%;max-width:600px;height:auto"/></div><div class="pdf-verdict-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px"><h2 style="margin:0;font-size:18px">VEREDICTO: <span style="color:#3b82f6">' + document.getElementById('verdictBadge').textContent + '</span></h2><div style="font-size:12px;color:#94a3b8">Asegurabilidad: <b>' + document.getElementById('insurability').textContent + '</b></div></div><p style="font-size:13px;line-height:1.6;font-style:italic;color:#cbd5e1;margin:0">"' + document.getElementById('finalAnalysisText').textContent + '"</p></div><div class="page-break"></div><div class="pdf-section-title">Evidencia Detallada</div>' + historyHtml + '<div style="margin-top:50px;text-align:center;border-top:1px solid rgba(255,255,255,0.05);padding-top:20px;font-size:10px;color:#475569">Documento generado automaticamente por Integrity Labs. Valido para analisis de cumplimiento normativo.</div>';
         const opt = {
             margin: [0.3, 0.3, 0.3, 0.3],
-            filename: `Integrity_Report_${agentName.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`,
+            filename: 'Integrity_Report_' + agentName.replace(/\s+/g, '_') + '_' + Date.now() + '.pdf',
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, letterRendering: true },
             jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
         };
-
         html2pdf().set(opt).from(wrapper).save();
     }
-
 }
 
 document.addEventListener('DOMContentLoaded', () => {

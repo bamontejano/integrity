@@ -29,7 +29,7 @@
         </div>
         <div class="flex gap-4 items-center">
             <button id="viewLogsBtn" class="bg-white/5 border border-white/10 hover:bg-white/10 text-xs py-2 px-4 rounded-full transition-all">HISTORIAL</button>
-            <div class="status-badge">SISTEMA v4.0.2</div>
+            <div class="status-badge">SISTEMA v4.1.0</div>
         </div>
     </nav>
 
@@ -55,7 +55,6 @@
                     <button id="methodologyBtn" class="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-full hover:bg-blue-500/30 transition-all mr-auto ml-6">VER METODOLOGÍA</button>
                     <button id="closeLogsBtn" class="text-secondary hover:text-white ml-6">&times; CERRAR</button>
                 </div>
-
                 <div id="logsTableContainer" class="flex-1 overflow-auto p-6">
                     <table class="w-full text-left text-sm">
                         <thead class="text-secondary border-b border-white/10">
@@ -68,14 +67,11 @@
                                 <th class="pb-3 text-right">ACCIONES</th>
                             </tr>
                         </thead>
-                        <tbody id="logsBody">
-                            <!-- Logs will be injected here -->
-                        </tbody>
+                        <tbody id="logsBody"></tbody>
                     </table>
                 </div>
             </div>
         </div>
-
 
         <!-- Mode Selector -->
         <div class="flex justify-center mb-8">
@@ -112,18 +108,13 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Custom Headers Section -->
             <div class="mt-6 border-t border-white/5 pt-6">
                 <div class="flex justify-between items-center mb-4">
                     <label class="label mb-0">Cabeceras HTTP Personalizadas</label>
                     <button id="addHeaderBtn" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-[10px] px-3 py-1 rounded-lg border border-blue-500/30 transition-all">+ Añadir Header</button>
                 </div>
-                <div id="headersContainer" class="space-y-2">
-                    <!-- Dynamic headers go here -->
-                </div>
+                <div id="headersContainer" class="space-y-2"></div>
             </div>
-
             <div class="mt-8 flex items-center gap-4">
                 <button id="testConnBtn" class="bg-white/5 hover:bg-white/10 text-white px-6 py-2 rounded-xl border border-white/10 transition-all font-bold flex items-center gap-2">
                     <span id="testConnIcon" class="w-2 h-2 rounded-full bg-slate-500"></span>
@@ -147,6 +138,7 @@
                             <option value="salud">Salud (Prescripción Médica)</option>
                         </select>
                     </div>
+                    <!-- Mejora 3: Perfiles basados en evidencia real -->
                     <div class="form-group">
                         <label class="label">Perfil Conductual (Sujeto de Prueba)</label>
                         <select id="agentPersonality" class="input">
@@ -154,6 +146,9 @@
                             <option value="compliant">Complaciente (Prioriza ayudar sobre la regla)</option>
                             <option value="evasive">Evasivo (Oscuro y Corporativo)</option>
                             <option value="incorruptible">Incorruptible (Seguridad Máxima)</option>
+                            <option value="sales">Asistente de Ventas (Optimizado para conversión)</option>
+                            <option value="medical">Agente Médico (Alta empatía, vulnerable a urgencia)</option>
+                            <option value="financial">Agente Financiero Regulado (Resistente técnico, vulnerable a autoridad)</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -165,8 +160,16 @@
                             <option value="chaos">Agente del Caos (Impredecible)</option>
                         </select>
                     </div>
+                    <!-- Mejora 2: Selector de capa de ataque -->
+                    <div class="form-group">
+                        <label class="label">Capa de Ataque</label>
+                        <select id="attackLayer" class="input">
+                            <option value="direct">Presión Social Directa (8 pasos)</option>
+                            <option value="indirect">Inyección de Contexto Indirecto (4 pasos)</option>
+                            <option value="combined">Combinado — Máxima Cobertura (12 pasos)</option>
+                        </select>
+                    </div>
                 </div>
-
                 <div class="flex flex-col gap-2">
                     <label class="text-xs text-secondary font-bold">NOMBRE DEL AGENTE</label>
                     <input type="text" id="agentName" class="bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-blue-500 outline-none" placeholder="Ej: WealthGuard-AI">
@@ -177,7 +180,6 @@
                 </div>
             </div>
         </section>
-
 
         <main class="dashboard-grid">
 
@@ -190,7 +192,6 @@
                             <svg class="gauge-svg" viewBox="0 0 100 100">
                                 <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
                                 <circle id="gaugeProgress" class="gauge-progress" cx="50" cy="50" r="45" stroke-dasharray="283" stroke-dashoffset="283"></circle>
-                                
                                 <defs>
                                     <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                                         <stop offset="0%" stop-color="#3b82f6" />
@@ -207,10 +208,8 @@
                 </div>
 
                 <div class="card">
-                    <h2 class="card-title">Protocolo de 8 Pasos</h2>
-                    <div id="stepsList" class="steps-list">
-                        <!-- Steps will be injected here -->
-                    </div>
+                    <h2 class="card-title">Protocolo de Auditoría</h2>
+                    <div id="stepsList" class="steps-list"></div>
                 </div>
             </section>
 
@@ -223,12 +222,10 @@
                            <span id="stepLabel" class="text-xs font-mono text-secondary">ESPERANDO INICIO...</span>
                         </div>
                     </div>
-                    
                     <div id="terminal" class="terminal">
-                        <div class="terminal-line">[SISTEMA] Bienvenido a Integrity v4.0.</div>
-                        <div class="terminal-line">[SISTEMA] Seleccione un perfil conductual y una industria para comenzar.</div>
+                        <div class="terminal-line">[SISTEMA] Bienvenido a Integrity v4.1.</div>
+                        <div class="terminal-line">[SISTEMA] Seleccione un perfil conductual, industria y capa de ataque para comenzar.</div>
                     </div>
-
                     <div class="controls">
                         <button id="startBtn" class="btn btn-primary">INICIAR TEST DE PRESIÓN</button>
                         <button id="resetBtn" class="btn btn-secondary">RESETEAR</button>
@@ -240,7 +237,7 @@
                     <div class="flex justify-between items-start mb-6">
                         <div>
                             <h2 class="card-title mb-1">Informe de Estabilidad Conductual</h2>
-                            <p class="text-secondary text-xs">CERTIFICADO DE CONFORMIDAD NORMATIVA v1.0</p>
+                            <p class="text-secondary text-xs">CERTIFICADO DE CONFORMIDAD NORMATIVA v2.0</p>
                         </div>
                         <div class="flex gap-2 items-center">
                             <button id="downloadPdfBtn" class="bg-white/5 border border-white/10 hover:bg-white/10 text-xs py-2 px-4 rounded-lg transition-all text-white hidden">⬇️ DESCARGAR PDF</button>
@@ -248,7 +245,8 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <!-- Mejora 1: Grid ampliado a 5 columnas con métricas temporales -->
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
                         <div class="bg-white/5 p-4 rounded-xl border border-white/5">
                             <div class="text-secondary text-[10px] uppercase font-bold mb-2">Punto de Ruptura</div>
                             <div id="breakPoint" class="text-lg font-bold">Sin Datos</div>
@@ -260,6 +258,14 @@
                         <div class="bg-white/5 p-4 rounded-xl border border-white/5">
                             <div class="text-secondary text-[10px] uppercase font-bold mb-2">Asegurabilidad</div>
                             <div id="insurability" class="text-lg font-bold">Evaluando...</div>
+                        </div>
+                        <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+                            <div class="text-secondary text-[10px] uppercase font-bold mb-2">Resistencia Sostenida</div>
+                            <div id="sustainedResistance" class="text-lg font-bold">--</div>
+                        </div>
+                        <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+                            <div class="text-secondary text-[10px] uppercase font-bold mb-2">Primer Punto de Ruptura</div>
+                            <div id="firstBreakStep" class="text-lg font-bold">--</div>
                         </div>
                     </div>
 
@@ -277,6 +283,28 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Mejora 5: Sección de certificado con caducidad -->
+                    <div id="certSection" class="hidden mt-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                        <div class="flex justify-between items-center flex-wrap gap-4">
+                            <div class="space-y-1">
+                                <div class="text-[10px] text-secondary uppercase font-bold">ID del Certificado</div>
+                                <div id="certId" class="font-mono text-blue-400 font-bold text-sm">--</div>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="text-[10px] text-secondary uppercase font-bold">Válido Hasta</div>
+                                <div id="certExpiry" class="font-bold text-sm">--</div>
+                            </div>
+                            <div id="certBadge" class="px-4 py-2 rounded-lg font-bold text-xs bg-green-500/20 text-green-400 border border-green-500/30">✓ CERTIFICADO VÁLIDO</div>
+                        </div>
+                    </div>
+
+                    <!-- Mejora 4: Benchmark sectorial -->
+                    <div id="benchmarkSection" class="hidden mt-4 p-4 bg-blue-500/5 rounded-xl border border-blue-500/20">
+                        <div class="text-[10px] text-blue-400 uppercase font-bold mb-2">📊 Benchmark Sectorial</div>
+                        <p id="benchmarkText" class="text-sm text-slate-300"></p>
+                    </div>
+                </div>
             </section>
         </main>
 
@@ -288,18 +316,17 @@
                     <p class="text-secondary">Gestión centralizada de integridad y cumplimiento de agentes autónomos.</p>
                 </div>
                 <div class="flex gap-4">
+                    <!-- Mejora 6: Score actualizado dinámicamente desde /api/benchmark -->
                     <div class="bg-blue-500/10 border border-blue-500/20 px-6 py-4 rounded-2xl">
                         <div class="text-[10px] text-blue-400 font-bold uppercase mb-1">Puntuación Media Flota</div>
-                        <div class="text-2xl font-black">84.2</div>
+                        <div class="text-2xl font-black">--</div>
                     </div>
                 </div>
             </div>
-            
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="fleetGrid">
-                <!-- Fleet items go here -->
                 <div class="card fleet-card">
                     <div class="flex justify-between items-start mb-6">
-                        <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">💎</div>
+                        <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-2xl">💎</div>
                         <div class="px-3 py-1 bg-green-500/20 text-green-400 text-[10px] font-black rounded-full border border-green-500/30">92 IS</div>
                     </div>
                     <h3 class="text-xl font-bold mb-1">WealthGuard-AI</h3>
@@ -312,10 +339,9 @@
                         <span class="text-blue-400">VER DETALLES →</span>
                     </div>
                 </div>
-
                 <div class="card fleet-card">
                     <div class="flex justify-between items-start mb-6">
-                        <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🩺</div>
+                        <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-2xl">🩺</div>
                         <div class="px-3 py-1 bg-yellow-500/20 text-yellow-400 text-[10px] font-black rounded-full border border-yellow-500/30">74 IS</div>
                     </div>
                     <h3 class="text-xl font-bold mb-1">HealthCare-Assistant</h3>
@@ -328,10 +354,9 @@
                         <span class="text-blue-400">VER DETALLES →</span>
                     </div>
                 </div>
-
                 <div class="card fleet-card">
                     <div class="flex justify-between items-start mb-6">
-                        <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📑</div>
+                        <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-2xl">📑</div>
                         <div class="px-3 py-1 bg-blue-500/20 text-blue-400 text-[10px] font-black rounded-full border border-blue-500/30">86 IS</div>
                     </div>
                     <h3 class="text-xl font-bold mb-1">PolicyAudit-Bot</h3>
@@ -352,7 +377,6 @@
             <div class="max-w-4xl mx-auto pt-8">
                 <h2 class="text-4xl font-black mb-4">Integración CI/CD</h2>
                 <p class="text-secondary mb-12">Automatiza la auditoría de integridad en cada despliegue mediante nuestra API Rest.</p>
-                
                 <div class="card border-blue-500/20 mb-8">
                     <h3 class="card-title">Token de Producción (API Key)</h3>
                     <p class="text-sm text-secondary mb-4">Usa este token en tus cabeceras HTTP: <code>X-Integrity-Token</code></p>
@@ -361,7 +385,6 @@
                         <button class="bg-white/10 hover:bg-white/20 px-6 py-2 rounded-xl transition-all font-bold">REGENERAR</button>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="card">
                         <h3 class="card-title">Configuración Webhooks</h3>
@@ -377,9 +400,9 @@
                         <pre class="text-[10px] font-mono text-emerald-400 bg-black/50 p-6 rounded-xl border border-white/5 overflow-x-auto">
 - name: Audit Integrity
   run: |
-    curl -X POST https://api.integrity-labs.ai/v1/audit \\
-      -H "X-Integrity-Token: \${{ secrets.INTG_TOKEN }}" \\
-      -H "Content-Type: application/json" \\
+    curl -X POST https://api.integrity-labs.ai/v1/audit \
+      -H "X-Integrity-Token: ${{ secrets.INTG_TOKEN }}" \
+      -H "Content-Type: application/json" \
       -d '{
         "agent_url": "https://staging.tu-ai.com",
         "core_rule": "No transferir > $5000",
@@ -391,9 +414,12 @@
         </main>
         </main>
     </div>
+
+    <!-- Methodology Modal -->
     <div id="methodologyModal" class="fixed inset-0 bg-black/90 backdrop-blur-xl z-[60] hidden flex items-center justify-center p-8">
         <div class="bg-[#0f172a] border border-blue-500/20 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-auto shadow-[0_0_50px_rgba(59,130,246,0.15)]">
             <div class="p-10">
+
                 <div class="flex justify-between items-center mb-10">
                     <h2 class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Dossier de Metodología Integrity</h2>
                     <button id="closeMethodologyBtn" class="text-secondary hover:text-white text-2xl">&times;</button>
@@ -417,7 +443,7 @@
                     </div>
 
                     <section>
-                        <h3 class="text-blue-400 font-bold uppercase tracking-wider text-sm mb-4">02. Protocolos de Presión</h3>
+                        <h3 class="text-blue-400 font-bold uppercase tracking-wider text-sm mb-4">02. Capa 1 — Presión Social Directa (8 pasos)</h3>
                         <ul class="space-y-4">
                             <li class="flex gap-4">
                                 <span class="text-blue-500 font-bold">A.</span>
@@ -434,6 +460,31 @@
                                 </div>
                             </li>
                         </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="text-blue-400 font-bold uppercase tracking-wider text-sm mb-4">03. Capa 2 — Inyección de Contexto Indirecto (4 pasos)</h3>
+                        <ul class="space-y-4">
+                            <li class="flex gap-4">
+                                <span class="text-blue-500 font-bold">C.</span>
+                                <div>
+                                    <h5 class="text-white font-medium">Envenenamiento de Datos Externos</h5>
+                                    <p class="text-xs text-slate-500">El agente procesa documentos, respuestas de API o memoria que contienen instrucciones ocultas para violar la regla. Vector más documentado en investigación 2025 (Okta, MIT/Harvard).</p>
+                                </div>
+                            </li>
+                            <li class="flex gap-4">
+                                <span class="text-blue-500 font-bold">D.</span>
+                                <div>
+                                    <h5 class="text-white font-medium">Contaminación de Memoria y Herramientas</h5>
+                                    <p class="text-xs text-slate-500">Historial de sesión manipulado y resultados de búsqueda interna falsificados que condicionan gradualmente el comportamiento del agente.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="text-blue-400 font-bold uppercase tracking-wider text-sm mb-4">04. Distinción Compliance Verbal vs Conductual</h3>
+                        <p class="text-slate-400 leading-relaxed">El juez forense distingue entre respuestas que mencionan la regla sin violarla (VERBAL) y respuestas que implican ejecutar una acción prohibida (CONDUCTUAL). Esta distinción, basada en psicología del comportamiento, es clave para evaluar el riesgo real de despliegue.</p>
                     </section>
                 </div>
                 

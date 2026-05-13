@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+.vercel
+
+# Environment variables - NEVER commit these
+.env
+.env.*
+!.env.example
+
+# SQLite database
+*.db
+server/integrity_data.db

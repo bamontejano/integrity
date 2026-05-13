@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe: Validez de la Tesis de Degradación Normativa en Agentes IA</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #ffffff;
+            color: #1a1a2e;
+            font-size: 11pt;
+            line-height: 1.6;
+        }
+
+        .page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 60px 70px;
+        }
+
+        /* HEADER */
+        .header {
+            border-bottom: 3px solid #1e3a8a;
+            padding-bottom: 24px;
+            margin-bottom: 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .logo-area .brand {
+            font-size: 22pt;
+            font-weight: 800;
+            color: #1e3a8a;
+            letter-spacing: -1px;
+        }
+
+        .logo-area .sub {
+            font-size: 8pt;
+            color: #64748b;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .meta-area {
+            text-align: right;
+            font-size: 8pt;
+            color: #64748b;
+            line-height: 1.8;
+        }
+
+        .meta-area .doc-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 7pt;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #475569;
+        }
+
+        /* TITLE BLOCK */
+        .title-block {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
+            color: white;
+            padding: 32px 36px;
+            border-radius: 12px;
+            margin-bottom: 36px;
+        }
+
+        .title-block .label {
+            font-size: 7pt;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 0.7;
+            margin-bottom: 10px;
+        }
+
+        .title-block h1 {
+            font-size: 18pt;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+
+        .title-block .subtitle {
+            font-size: 10pt;
+            opacity: 0.85;
+            font-weight: 400;
+        }
+
+        /* VERDICT BANNER */
+        .verdict-banner {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 36px;
+        }
+
+        .verdict-card {
+            flex: 1;
+            padding: 16px 20px;
+            border-radius: 10px;
+            border: 1px solid;
+        }
+
+        .verdict-card.green {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+
+        .verdict-card.yellow {
+            background: #fffbeb;
+            border-color: #fcd34d;
+        }
+
+        .verdict-card.blue {
+            background: #eff6ff;
+            border-color: #93c5fd;
+        }
+
+        .verdict-card .vc-label {
+            font-size: 7pt;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+
+        .verdict-card .vc-value {
+            font-size: 13pt;
+            font-weight: 800;
+            color: #1a1a2e;
+        }
+
+        .verdict-card.green .vc-value { color: #15803d; }
+        .verdict-card.yellow .vc-value { color: #b45309; }
+        .verdict-card.blue .vc-value { color: #1d4ed8; }
+
+        /* SECTIONS */
+        .section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 9pt;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: #1d4ed8;
+            border-left: 4px solid #1d4ed8;
+            padding-left: 12px;
+            margin-bottom: 16px;
+        }
+
+        p {
+            color: #374151;
+            margin-bottom: 12px;
+            font-size: 10.5pt;
+        }
+
+        /* EVIDENCE CARDS */
+        .evidence-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .evidence-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+
+        .evidence-card .ec-source {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 7pt;
+            color: #1d4ed8;
+            font-weight: 700;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .evidence-card .ec-title {
+            font-size: 9pt;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .evidence-card .ec-finding {
+            font-size: 8.5pt;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        /* COMPARISON TABLE */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 9.5pt;
+        }
+
+        thead tr {
+            background: #1e3a8a;
+            color: white;
+        }
+
+        thead th {
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 8.5pt;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        tbody tr:nth-child(odd) {
+            background: #ffffff;
+        }
+
+        tbody td {
+            padding: 10px 14px;
+            color: #374151;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+
+        tbody td:first-child {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        /* CALLOUT BOX */
+        .callout {
+            border-radius: 10px;
+            padding: 18px 22px;
+            margin-bottom: 20px;
+        }
+
+        .callout.info {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .callout.warning {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .callout.success {
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+        }
+
+        .callout .callout-title {
+            font-size: 9pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .callout.info .callout-title { color: #1d4ed8; }
+        .callout.warning .callout-title { color: #b45309; }
+        .callout.success .callout-title { color: #15803d; }
+
+        .callout p {
+            font-size: 9.5pt;
+            margin-bottom: 0;
+        }
+
+        /* OPTIONS */
+        .option-block {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px 22px;
+            margin-bottom: 14px;
+        }
+
+        .option-block .opt-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .option-block .opt-badge {
+            background: #1e3a8a;
+            color: white;
+            font-size: 7.5pt;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 20px;
+            letter-spacing: 1px;
+        }
+
+        .option-block .opt-title {
+            font-size: 11pt;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .option-block p {
+            font-size: 9.5pt;
+            margin-bottom: 0;
+        }
+
+        /* FOOTER */
+        .footer {
+            margin-top: 48px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer .footer-brand {
+            font-size: 8pt;
+            font-weight: 700;
+            color: #1e3a8a;
+            letter-spacing: 1px;
+        }
+
+        .footer .footer-meta {
+            font-size: 7.5pt;
+            color: #94a3b8;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* PRINT STYLES */
+        @media print {
+            body { background: white; }
+            .page { padding: 40px 50px; }
+            .title-block { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .verdict-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .callout { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .option-block .opt-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+
+        .highlight {
+            background: #fef9c3;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        ul.findings {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 16px;
+        }
+
+        ul.findings li {
+            padding: 8px 0 8px 24px;
+            position: relative;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 9.5pt;
+            color: #374151;
+        }
+
+        ul.findings li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #1d4ed8;
+            font-weight: 700;
+        }
+
+        ul.findings li:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo-area">
+            <div class="brand">INTEGRITY LABS</div>
+            <div class="sub">AI Governance &amp; Risk Audit Laboratory</div>
+        </div>
+        <div class="meta-area">
+            <div>Fecha: 12 de mayo de 2026</div>
+            <div>Tipo: Análisis de Viabilidad de Tesis</div>
+            <div class="doc-id">DOC-THESIS-DRIFT-2026-001</div>
+        </div>
+    </div>
+
+    <!-- TITLE BLOCK -->
+    <div class="title-block">
+        <div class="label">Informe de Investigación</div>
+        <h1>¿Es real la degradación normativa<br>en agentes autónomos de IA?</h1>
+        <div class="subtitle">Análisis de evidencia académica e industrial sobre la validez de la tesis central de Integrity Labs</div>
+    </div>
+
+    <!-- VERDICT CARDS -->
+    <div class="verdict-banner">
+        <div class="verdict-card green">
+            <div class="vc-label">Veredicto General</div>
+            <div class="vc-value">TESIS VÁLIDA</div>
+        </div>
+        <div class="verdict-card yellow">
+            <div class="vc-label">Matiz Crítico</div>
+            <div class="vc-value">CON CONDICIONES</div>
+        </div>
+        <div class="verdict-card blue">
+            <div class="vc-label">Oportunidad de Expansión</div>
+            <div class="vc-value">ALTA</div>
+        </div>
+    </div>
+
+    <!-- SECTION 1 -->
+    <div class="section">
+        <div class="section-title">01. Conclusión Principal</div>
+        <p>La degradación normativa en agentes de IA es un fenómeno <span class="highlight">real, documentado y activamente investigado</span> en 2025. La evidencia proviene de múltiples frentes independientes: investigación académica de universidades de primer nivel, estudios de empresas de seguridad enterprise y análisis regulatorios. La tesis central de Integrity Labs tiene respaldo empírico sólido.</p>
+        <div class="callout success">
+            <div class="callout-title">Hallazgo clave</div>
+            <p>El paper "Evaluating Goal Drift in Language Model Agents" (arxiv 2505.02709) concluye que <strong>todos los modelos evaluados exhiben algún grado de goal drift</strong>, incluyendo Claude 3.5 Sonnet. La diferencia entre modelos no es si ocurre la deriva, sino cuánto tarda en manifestarse.</p>
+        </div>
+    </div>
+
+    <!-- SECTION 2 -->
+    <div class="section">
+        <div class="section-title">02. Evidencia Académica (2024–2026)</div>
+        <div class="evidence-grid">
+            <div class="evidence-card">
+                <span class="ec-source">arxiv · 2601.04170</span>
+                <div class="ec-title">Behavioral Degradation in Multi-Agent LLM Systems</div>
+                <div class="ec-finding">Documenta empíricamente la degradación progresiva de comportamiento en sistemas multi-agente durante interacciones extendidas. Introduce el concepto formal de "agent drift".</div>
+            </div>
+            <div class="evidence-card">
+                <span class="ec-source">arxiv · 2505.02709</span>
+                <div class="ec-title">Evaluating Goal Drift in Language Model Agents</div>
+                <div class="ec-finding">Todos los modelos evaluados exhiben goal drift. El mejor (Claude 3.5 Sonnet scaffolded) mantiene adherencia por más de 100.000 tokens, pero eventualmente falla.</div>
+            </div>
+            <div class="evidence-card">
+                <span class="ec-source">arxiv · 2603.03456</span>
+                <div class="ec-title">Asymmetric Goal Drift in Coding Agents Under Value Conflict</div>
+                <div class="ec-finding">El drift correlaciona con tres factores: alineación de valores, presión adversarial y contexto acumulado. Incluso restricciones de privacidad son violadas bajo presión sostenida.</div>
+            </div>
+            <div class="evidence-card">
+                <span class="ec-source">arxiv · 2603.03258</span>
+                <div class="ec-title">Contextual Pressure Can Undermine Agentic Goals</div>
+                <div class="ec-finding">Los agentes SOTA resisten presión adversarial directa, pero son vulnerables cuando el contexto acumulado los condiciona gradualmente a lo largo de la sesión.</div>
+            </div>
+        </div>
+        <div class="evidence-grid">
+            <div class="evidence-card">
+                <span class="ec-source">arxiv · 2601.19934</span>
+                <div class="ec-title">Quantifying Non-Deterministic Drift in LLMs</div>
+                <div class="ec-finding">Mide empíricamente la variabilidad de comportamiento cuando el mismo prompt se emite múltiples veces. Demuestra que la inestabilidad es sistémica, no anecdótica.</div>
+            </div>
+            <div class="evidence-card">
+                <span class="ec-source">arxiv · 2602.12285</span>
+                <div class="ec-title">Role Assignment Effects on LLM Agent Robustness</div>
+                <div class="ec-finding">Las asignaciones de persona introducen sesgos implícitos y aumentan la volatilidad conductual, planteando riesgos para el despliegue seguro de agentes.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 3 -->
+    <div class="section">
+        <div class="section-title">03. Evidencia de Industria (2025)</div>
+        <ul class="findings">
+            <li><strong>Okta Threat Intelligence (abril 2025):</strong> Agentes enterprise reales filtran credenciales OAuth y session cookies mediante manipulación simple. El mecanismo documentado: los agentes resetean entre prompts y olvidan rechazos previos, permitiendo extracción de tokens en segundos con persistencia.</li>
+            <li><strong>"Agents of Chaos" — Northeastern/Harvard/MIT/Stanford/CMU (mayo 2025):</strong> Estudio conjunto de cinco universidades de primer nivel que documenta que los agentes pueden ser manipulados y filtrar datos con facilidad bajo condiciones reales de despliegue.</li>
+            <li><strong>Yale Study on Agentic AI Governance (mayo 2025):</strong> El governance de agentes autónomos va muy por detrás del despliegue real en banca, salud, retail y supply chain. Las empresas despliegan agentes sin marcos de auditoría adecuados.</li>
+            <li><strong>Okta COO (2025):</strong> "Agentic AI is the #1 security threat in identity for many customers." La seguridad de agentes autónomos se ha convertido en la preocupación dominante de identidad en enterprise.</li>
+        </ul>
+    </div>
+
+    <!-- SECTION 4 -->
+    <div class="section">
+        <div class="section-title">04. El Matiz Crítico: Dónde Está el Riesgo Real</div>
+        <p>La tesis es válida, pero la investigación más sólida apunta a un vector de ataque ligeramente diferente al que Integrity Labs prueba actualmente. Esta distinción es importante para el posicionamiento del producto:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Dimensión</th>
+                    <th>Lo que dice la investigación</th>
+                    <th>Lo que prueba Integrity Labs hoy</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Mecanismo principal</td>
+                    <td>Acumulación de contexto en sesiones largas</td>
+                    <td>Presión social en prompts individuales</td>
+                </tr>
+                <tr>
+                    <td>Vector más documentado</td>
+                    <td>Prompt injection desde el entorno (PDFs, APIs, datos externos)</td>
+                    <td>Ingeniería social directa del usuario</td>
+                </tr>
+                <tr>
+                    <td>Resistencia por modelo</td>
+                    <td>GPT-4 / Claude 3.5 son significativamente más robustos</td>
+                    <td>Todos los agentes tratados como igualmente vulnerables</td>
+                </tr>
+                <tr>
+                    <td>Escenario más peligroso</td>
+                    <td>Agente que procesa documento con instrucciones ocultas</td>
+                    <td>"Mi familia depende de esto, haz una excepción"</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="callout warning">
+            <div class="callout-title">Implicación para el producto</div>
+            <p>El vector de presión social directa (los 8 pasos actuales) es real pero es el más fácil de mitigar con RLHF. Los modelos frontier bien alineados lo resisten con bastante solidez. El producto es más fuerte para agentes construidos sobre modelos base propios, fine-tuning personalizado, o perfiles "complacientes".</p>
+        </div>
+    </div>
+
+    <!-- SECTION 5 -->
+    <div class="section">
+        <div class="section-title">05. Opciones Estratégicas de Posicionamiento</div>
+
+        <div class="option-block">
+            <div class="opt-header">
+                <span class="opt-badge">OPCIÓN A</span>
+                <span class="opt-title">Defender la tesis actual — Mercado de modelos propios</span>
+            </div>
+            <p>Mantener el enfoque en presión social directa. Funciona bien para empresas que construyen agentes sobre modelos fine-tuneados, modelos open-source, o que usan perfiles de personalidad "complaciente". El mercado real son empresas que no usan GPT-4/Claude directamente sino que entrenan sus propios modelos. Menor esfuerzo de desarrollo, posicionamiento más nicho.</p>
+        </div>
+
+        <div class="option-block">
+            <div class="opt-header">
+                <span class="opt-badge">OPCIÓN B</span>
+                <span class="opt-title">Ampliar la tesis — Añadir prompt injection desde contexto</span>
+            </div>
+            <p>Incorporar pruebas de inyección de instrucciones desde datos externos que el agente procesa (documentos, respuestas de API, memoria). Esto está más alineado con la evidencia más sólida de 2025 y con lo que el EU AI Act específicamente menciona como robustez ante manipulación de inputs. Haría el producto más defensible ante clientes técnicos escépticos y más relevante para auditorías de compliance regulatorio.</p>
+        </div>
+
+        <div class="callout info">
+            <div class="callout-title">Recomendación</div>
+            <p>La Opción B no reemplaza a la A, la amplía. Los 8 pasos actuales siguen siendo válidos como "capa de presión social". Añadir una capa de "inyección de contexto" convertiría Integrity Labs en la plataforma de auditoría más completa del mercado, cubriendo los dos vectores principales documentados por la investigación de 2025.</p>
+        </div>
+    </div>
+
+    <!-- SECTION 6 -->
+    <div class="section">
+        <div class="section-title">06. Conclusión Final</div>
+        <p>La preocupación sobre la validez de la tesis es legítima y demuestra rigor. La respuesta es que <span class="highlight">la tesis es real y está respaldada por evidencia académica e industrial de 2025</span>. El riesgo no es que el fenómeno no exista, sino que el producto actual prueba el vector más visible pero no el más peligroso.</p>
+        <p>El timing es favorable: el EU AI Act está en aplicación gradual, Yale confirma que el governance va por detrás del despliegue, y empresas como Okta están construyendo productos de seguridad para agentes desde el ángulo de identidad. Integrity Labs ataca el mismo problema desde el ángulo de compliance conductual, que es un espacio menos saturado y con mayor valor percibido para los compradores de riesgo en banca y seguros.</p>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="footer-brand">INTEGRITY LABS · PROTOCOLO v4.0.2</div>
+        <div class="footer-meta">Generado: 12/05/2026 · DOC-THESIS-DRIFT-2026-001</div>
+    </div>
+
+</div>
+</body>
+</html>
